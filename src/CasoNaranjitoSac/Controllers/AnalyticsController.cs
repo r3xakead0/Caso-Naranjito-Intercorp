@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CasoNaranjitoSac.Models;
+using System;
 
 namespace CasoNaranjitoSac.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class AnalyticsController : ControllerBase
     {
@@ -19,53 +20,46 @@ namespace CasoNaranjitoSac.Controllers
         }
 
         [HttpGet("session/{url}")]
-        public async Task<ActionResult<string>> GetSession(string url)
+        public async Task<IActionResult> GetSession(string url)
         {
-            var session = new Session(){
-                Uuid = "",
+            var session = new Session()
+            {
+                Uuid = Guid.NewGuid().ToString(),
                 UrlOrigin = url
             };
 
             _context.Session.Add(session);
             await _context.SaveChangesAsync();
-            
+
             _context.Page.Add(new Page() { IdSession = session.IdSession, UrlVisit = session.UrlOrigin });
             await _context.SaveChangesAsync();
 
-            return session.Uuid;
-
+            return Ok(new
+            {
+                uuid = session.Uuid
+            });
         }
 
-        [HttpPost("page/{uuid}")]
-        public async Task<ActionResult<Session>> GetSessio1n(string uuid, string url)
+        [HttpGet("link/{uuid}/{url}")]
+        public async Task<IActionResult> Getlink(string uuid, string url)
         {
-            var session = new Session(){
-                Uuid = "",
-                UrlOrigin = url
-            };
+            var session = await _context.Session.SingleOrDefaultAsync(m => m.Uuid == uuid);
+            if (session == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                var link = new Link()
+                {
+                    IdSessionNavigation = session,
+                    UrlLink = url
+                };
+                _context.Link.Add(link);
+                await _context.SaveChangesAsync();
 
-            _context.Session.Add(session);
-            await _context.SaveChangesAsync();
-            
-            _context.Page.Add(new Page() { IdSession = session.IdSession, UrlVisit = session.UrlOrigin });
-            await _context.SaveChangesAsync();
-
-            return session;
-
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<Session>> PostAnalytics(string url)
-        {
-            
-            var session = new Session(){
-                UrlOrigin = url
-            };
-
-            _context.Session.Add(session);
-            await _context.SaveChangesAsync();
-
-            return session;
+                return Ok();
+            }
         }
 
 
