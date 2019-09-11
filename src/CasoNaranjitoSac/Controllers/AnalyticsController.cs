@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using CasoNaranjitoSac.Models;
 using System;
@@ -19,19 +17,16 @@ namespace CasoNaranjitoSac.Controllers
             _context = context;
         }
 
-        [HttpGet("session/{url}")]
-        public async Task<IActionResult> GetSession(string url)
+        [HttpPost("session")]
+        public async Task<IActionResult> GetSession(PostBody data)
         {
             var session = new Session()
             {
                 Uuid = Guid.NewGuid().ToString(),
-                UrlOrigin = url
+                UrlOrigin = data.Url
             };
 
             _context.Session.Add(session);
-            await _context.SaveChangesAsync();
-
-            _context.Page.Add(new Page() { IdSession = session.IdSession, UrlVisit = session.UrlOrigin });
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -40,10 +35,10 @@ namespace CasoNaranjitoSac.Controllers
             });
         }
 
-        [HttpGet("link/{uuid}/{url}")]
-        public async Task<IActionResult> Getlink(string uuid, string url)
+        [HttpPost("link")]
+        public async Task<IActionResult> PostLink(PostBody data)
         {
-            var session = await _context.Session.SingleOrDefaultAsync(m => m.Uuid == uuid);
+            var session = await _context.Session.SingleOrDefaultAsync(m => m.Uuid == data.Uuid);
             if (session == null)
             {
                 return NotFound();
@@ -53,7 +48,7 @@ namespace CasoNaranjitoSac.Controllers
                 var link = new Link()
                 {
                     IdSessionNavigation = session,
-                    UrlLink = url
+                    UrlLink = data.Url
                 };
                 _context.Link.Add(link);
                 await _context.SaveChangesAsync();
@@ -62,6 +57,55 @@ namespace CasoNaranjitoSac.Controllers
             }
         }
 
+        [HttpPost("page/init")]
+        public async Task<IActionResult> PostInitPage(PostBody data)
+        {
+            var session = await _context.Session.SingleOrDefaultAsync(m => m.Uuid == data.Uuid);
+            if (session == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                var page = new Page()
+                {
+                    IdSessionNavigation = session,
+                    UrlVisit = data.Url
+                };
+                _context.Page.Add(page);
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
+        }
+
+        [HttpPost("page/ended")]
+        public async Task<IActionResult> PostEndedPage(PostBody data)
+        {
+            var session = await _context.Session.SingleOrDefaultAsync(m => m.Uuid == data.Uuid);
+            if (session == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                Page page = null;
+
+                page = await _context.Page.SingleOrDefaultAsync(m => m.IdSession == session.IdSession && m.Ended == null);
+                if (page != null)
+                {
+                    page.Ended = DateTime.Now;
+                    _context.Entry(page).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+
+                    return Ok();
+                }
+                else
+                {
+                    return NotFound();
+                }
+            }
+        }
 
     }
 }
