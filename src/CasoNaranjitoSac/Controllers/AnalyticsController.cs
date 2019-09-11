@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CasoNaranjitoSac.Models;
 
-namespace AnalyticsController.Controllers
+namespace CasoNaranjitoSac.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -18,67 +18,56 @@ namespace AnalyticsController.Controllers
             _context = context;
         }
 
-        // GET: api/Analytics
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Analytics>>> GetAnalyticsItems()
+        [HttpGet("session/{url}")]
+        public async Task<ActionResult<string>> GetSession(string url)
         {
-            return await _context.AnalyticsItems.ToListAsync();
+            var session = new Session(){
+                Uuid = "",
+                UrlOrigin = url
+            };
+
+            _context.Session.Add(session);
+            await _context.SaveChangesAsync();
+            
+            _context.Page.Add(new Page() { IdSession = session.IdSession, UrlVisit = session.UrlOrigin });
+            await _context.SaveChangesAsync();
+
+            return session.Uuid;
+
         }
 
-        // GET: api/Analytics/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Analytics>> GetAnalyticsItem(string guid)
+        [HttpPost("page/{uuid}")]
+        public async Task<ActionResult<Session>> GetSessio1n(string uuid, string url)
         {
-            var AnalyticsItem = await _context.AnalyticsItems.FindAsync(guid);
+            var session = new Session(){
+                Uuid = "",
+                UrlOrigin = url
+            };
 
-            if (AnalyticsItem == null)
-            {
-                return NotFound();
-            }
+            _context.Session.Add(session);
+            await _context.SaveChangesAsync();
+            
+            _context.Page.Add(new Page() { IdSession = session.IdSession, UrlVisit = session.UrlOrigin });
+            await _context.SaveChangesAsync();
 
-            return AnalyticsItem;
+            return session;
+
         }
 
-        // POST: api/Analytics
         [HttpPost]
-        public async Task<ActionResult<Analytics>> PostAnalyticsItem(Analytics item)
+        public async Task<ActionResult<Session>> PostAnalytics(string url)
         {
-            _context.AnalyticsItems.Add(item);
+            
+            var session = new Session(){
+                UrlOrigin = url
+            };
+
+            _context.Session.Add(session);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetAnalyticsItem), new { id = item.guid }, item);
+            return session;
         }
 
-        // PUT: api/Analytics/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAnalyticsItem(string guid, Analytics item)
-        {
-            if (guid != item.guid)
-            {
-                return BadRequest();
-            }
 
-            _context.Entry(item).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        // DELETE: api/Analytics/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAnalyticsItem(string guid)
-        {
-            var AnalyticsItem = await _context.AnalyticsItems.FindAsync(guid);
-
-            if (AnalyticsItem == null)
-            {
-                return NotFound();
-            }
-
-            _context.AnalyticsItems.Remove(AnalyticsItem);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using CasoNaranjitoSac.Models;
+using MySql.Data.EntityFrameworkCore;
 
 namespace CasoNaranjitoSac
 {
@@ -20,7 +21,9 @@ namespace CasoNaranjitoSac
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<AnalyticsContext>(opt => opt.UseInMemoryDatabase("AnalyticsList"));
+            services.AddDbContext<AnalyticsContext>(options => 
+            options.UseMySQL(Configuration.GetConnectionString("DefaultConnection")));
+            
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
