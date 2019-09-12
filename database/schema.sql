@@ -1,0 +1,33 @@
+CREATE DATABASE casonaranjitosac;
+
+USE casonaranjitosac;
+
+DROP TABLE IF EXISTS link;
+DROP TABLE IF EXISTS page;
+DROP TABLE IF EXISTS session;
+
+CREATE TABLE session (
+    uuid CHAR(36) NULL UNIQUE,
+    urlOrigin VARCHAR(100) NOT NULL,
+    created DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (uuid)
+);
+
+CREATE TABLE page (
+	idPage INT NOT NULL AUTO_INCREMENT,
+    uuid CHAR(36) NOT NULL,
+    urlVisit varchar(100) NOT NULL,
+    initial DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ended DATETIME NULL,
+    PRIMARY KEY (idPage),
+    FOREIGN KEY (uuid) REFERENCES session(uuid)
+);
+
+CREATE TABLE link (
+	idLink INT NOT NULL AUTO_INCREMENT,
+    uuid CHAR(36) NOT NULL,
+    urlLink VARCHAR(100) NOT NULL,
+    created DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (idLink),
+    FOREIGN KEY (uuid) REFERENCES session(uuid)
+);
