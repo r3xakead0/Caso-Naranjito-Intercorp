@@ -2,7 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using CasoNaranjitoSac.Models;
+using CasoNaranjitoSac.Models.Views;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CasoNaranjitoSac.Controllers
 {
@@ -107,5 +110,111 @@ namespace CasoNaranjitoSac.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Session>>> GetSessions()
+        {
+            var results = await _context.Session
+            .Select(e => new Session
+            {
+                IdSession = e.IdSession,
+                Uuid = e.Uuid,
+                UrlOrigin = e.UrlOrigin,
+                Created = e.Created,
+                Page = e.Page
+                .Select(
+                    page => new Page
+                    {
+                        IdPage = page.IdPage,
+                        IdSession = page.IdSession,
+                        Initial = page.Initial,
+                        Ended = page.Ended,
+                        UrlVisit = page.UrlVisit
+                    }).ToList(),
+                Link = e.Link
+                .Select(
+                    link => new Link
+                    {
+                        IdLink = link.IdLink,
+                        IdSession = link.IdSession,
+                        UrlLink = link.UrlLink,
+                        Created = link.Created,
+                    }).ToList()
+            })
+            .OrderByDescending(e => e.IdSession)
+            .ToListAsync();
+
+            return results;
+        }
+
+        [HttpGet("{uuid}")]
+        public async Task<ActionResult<Session>> GetSession(string uuid)
+        {
+            var session = await _context.Session
+            .Include(o => o.Page).FirstOrDefaultAsync(m => m.Uuid == uuid);
+
+
+            if (session != null)
+            {
+                session.Page = session.Page.Select(
+                    page => new Page
+                    {
+                        IdPage = page.IdPage,
+                        IdSession = page.IdSession,
+                        Initial = page.Initial,
+                        Ended = page.Ended,
+                        UrlVisit = page.UrlVisit
+                    }).ToList();
+
+                session.Link = session.Link.Select(
+                    link => new Link
+                    {
+                        IdLink = link.IdLink,
+                        IdSession = link.IdSession,
+                        UrlLink = link.UrlLink,
+                        Created = link.Created,
+                    }).ToList();
+
+                return session;
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("report")]
+        public async Task<IActionResult> GetReport()
+        {
+            const string query = @"SELECT t0.uuid Uuid, 
+                                COUNT(t1.urlVisit) Pages, 
+                                COUNT(t2.urlLink) Links,
+                                TIMESTAMPDIFF(SECOND,MIN(t1.initial),MAX(t1.ended)) Seconds
+                                FROM SESSION t0 
+                                INNER JOIN page t1 ON t1.idSession = t0.idSession
+                                INNER JOIN link t2 ON t2.idSession = t0.idSession
+                                GROUP BY t0.uuid 
+                                ORDER BY t0.idSession DESC;";
+
+            var conn = _context.Database.GetDbConnection();
+  
+            await conn.OpenAsync();
+            var command = conn.CreateCommand();
+            command.CommandText = query;
+            var reader = await command.ExecuteReaderAsync();
+
+            Analytics analytics = null; 
+
+            if (await reader.ReadAsync())
+            {
+                analytics = new Analytics(){
+                    Uuid = reader.GetString(0),
+                    Pages = reader.GetString(1),
+                    Links = reader.GetString(2),
+                    Seconds = int.Parse(reader.GetString(3))
+                };
+            }
+
+            return new ObjectResult(analytics);
+        }
     }
 }

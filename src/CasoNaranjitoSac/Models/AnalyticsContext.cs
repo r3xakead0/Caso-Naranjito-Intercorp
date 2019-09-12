@@ -13,7 +13,7 @@ namespace CasoNaranjitoSac.Models
         public virtual DbSet<Link> Link { get; set; }
         public virtual DbSet<Page> Page { get; set; }
         public virtual DbSet<Session> Session { get; set; }
-
+ 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("ProductVersion", "2.2.6-servicing-10079");

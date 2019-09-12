@@ -1,6 +1,6 @@
 using System;
 
-namespace CasoNaranjitoSac.Models
+namespace CasoNaranjitoSac.Models.Views
 {
     public class PostBody
     {
