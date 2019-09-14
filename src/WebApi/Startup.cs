@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using CasoNaranjitoSac.Models;
-using MySql.Data.EntityFrameworkCore;
 
 namespace CasoNaranjitoSac
 {
